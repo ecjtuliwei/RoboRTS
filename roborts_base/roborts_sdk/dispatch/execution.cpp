@@ -34,7 +34,7 @@ void Executor::ExecuteSubscription(const std::shared_ptr<SubscriptionBase>& subs
   if (ret) {
     subscription->HandleMessage(message_header, message);
   } else {
-//      DLOG_ERROR<<"take message failed!";
+//     DLOG_ERROR<<"take message failed!";
   }
   //TODO: add return message;
   //subscription->return_message(message);

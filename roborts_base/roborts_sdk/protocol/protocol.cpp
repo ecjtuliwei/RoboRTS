@@ -142,6 +142,13 @@ void Protocol::ReceivePool() {
                  <<", receiver: 0x" <<std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.receiver);
 
       }
+//        DLOG_INFO<<"Capture command: "
+//                 <<" message header "<<" seq_num 0x"<<std::setw(2) << std::hex << std::setfill('0') <<int (container_ptr->message_header.seq_num)<<" session_id "<<int (container_ptr->message_header.session_id)
+//                 <<" length "<<int(container_ptr->command_info.length)<<" "
+//                 <<"cmd set: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.cmd_set)
+//                 <<", cmd id: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.cmd_id)
+//                 <<", sender: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.sender)
+//                 <<", receiver: 0x" <<std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.receiver);
       //1 time copy
       buffer_pool_map_[std::make_pair(container_ptr->command_info.cmd_set,
                                       container_ptr->command_info.cmd_id)]->Push(*container_ptr);
@@ -163,7 +170,7 @@ bool Protocol::Take(const CommandInfo *command_info,
   std::lock_guard<std::mutex> lock(mutex_);
   if (buffer_pool_map_.count(std::make_pair(command_info->cmd_set,
                                             command_info->cmd_id)) == 0) {
-//    DLOG_ERROR<<"take failed";
+    DLOG_ERROR<<"take failed";
     return false;
   } else {
     //1 time copy
@@ -171,7 +178,7 @@ bool Protocol::Take(const CommandInfo *command_info,
 
     if (!buffer_pool_map_[std::make_pair(command_info->cmd_set,
                                          command_info->cmd_id)]->Pop(container)) {
-//      DLOG_EVERY_N(ERROR, 100)<<"nothing to take";
+     DLOG_EVERY_N(ERROR, 100)<<"nothing to take";
       return false;
     }
 
@@ -616,6 +623,7 @@ bool Protocol::DeviceSend(uint8_t *buf) {
   } else if (ans != header_ptr->length) {
     DLOG_ERROR << "Port send failed, send length:" << ans << "package length" << header_ptr->length;
   } else {
+      // length 22 是心跳包的字节？？还是bit？？
     DLOG_INFO << "Port send success with length: " << header_ptr->length;
     return true;
   }

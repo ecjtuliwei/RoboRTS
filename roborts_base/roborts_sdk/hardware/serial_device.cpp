@@ -31,14 +31,17 @@ SerialDevice::~SerialDevice() {
 }
 
 bool SerialDevice::Init() {
-
+   DLOG_INFO << "...Serial started successfully.";
   DLOG_INFO << "Attempting to open device " << port_name_ << " with baudrate " << baudrate_;
+
   if (port_name_.c_str() == nullptr) {
-    port_name_ = "/dev/ttyUSB0";
+    port_name_ = "/dev/ttyACM0";
   }
   if (OpenDevice() && ConfigDevice()) {
     FD_ZERO(&serial_fd_set_);
     FD_SET(serial_fd_, &serial_fd_set_);
+     DLOG_INFO << "...Serial started successfully.";
+   
     DLOG_INFO << "...Serial started successfully.";
     return true;
   } else {
@@ -162,7 +165,7 @@ int SerialDevice::Read(uint8_t *buf, int len) {
     return -1;
   } else {
     ret = read(serial_fd_, buf, len);
-    DLOG_INFO<<"Read once length: "<<ret;
+//      DLOG_INFO<<"Read once length: "<<ret;
     while (ret == 0) {
       LOG_ERROR << "Connection closed, try to reconnect.";
       while (!Init()) {

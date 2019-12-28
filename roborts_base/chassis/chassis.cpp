@@ -30,7 +30,7 @@ Chassis::~Chassis(){
   }
 }
 void Chassis::SDK_Init(){
-
+    // step 1:创建客户端 将客户端 的信息放在 handle 的 client_factory_
   verison_client_ = handle_->CreateClient<roborts_sdk::cmd_version_id,roborts_sdk::cmd_version_id>
       (UNIVERSAL_CMD_SET, CMD_REPORT_VERSION,
        MANIFOLD2_ADDRESS, CHASSIS_ADDRESS);
@@ -46,21 +46,28 @@ void Chassis::SDK_Init(){
                                                int(future.get()->version_id>>8&0xFF),
                                                int(future.get()->version_id&0xFF));
                                     });
-
+  ROS_INFO("PUBLISH SSSSS ");
+  // subscriber 会放在 hander 的 subscriber factor 里面 在ros——spin 循环时候去读取里面有没有消息
+  // 有的话就做出相应的动作
+  // publiser 也是一样的逻辑
+  // 创建 subscriber 监听 底盘信息 监听从底盘的串口信息
   handle_->CreateSubscriber<roborts_sdk::cmd_chassis_info>(CHASSIS_CMD_SET, CMD_PUSH_CHASSIS_INFO,
                                                            CHASSIS_ADDRESS, MANIFOLD2_ADDRESS,
                                                            std::bind(&Chassis::ChassisInfoCallback, this, std::placeholders::_1));
+    // 创建 subscriber 监听 UWB室内定位系统的信息 监听从底盘的串口信息 解析出UWB发送出来
   handle_->CreateSubscriber<roborts_sdk::cmd_uwb_info>(COMPATIBLE_CMD_SET, CMD_PUSH_UWB_INFO,
                                                        CHASSIS_ADDRESS, MANIFOLD2_ADDRESS,
                                                        std::bind(&Chassis::UWBInfoCallback, this, std::placeholders::_1));
-
+    // 创建 publisher 发布底盘发给PC的底盘轮子速度信息 这里的发布是发布给底盘 方向PC-> 底盘
   chassis_speed_pub_ = handle_->CreatePublisher<roborts_sdk::cmd_chassis_speed>(CHASSIS_CMD_SET, CMD_SET_CHASSIS_SPEED,
                                                                                 MANIFOLD2_ADDRESS, CHASSIS_ADDRESS);
+    // 创建 publisher 发布底盘发给PC的底盘轮子加速度信息 这里的发布是发布给底盘 方向PC-> 底盘
   chassis_spd_acc_pub_ = handle_->CreatePublisher<roborts_sdk::cmd_chassis_spd_acc>(CHASSIS_CMD_SET, CMD_SET_CHASSIS_SPD_ACC,
                                                                                     MANIFOLD2_ADDRESS, CHASSIS_ADDRESS);
-
+    // 创建 publisher 发布心跳包 维持底盘和PC的连接 这里的发布是发布给底盘 方向PC-> 底盘
   heartbeat_pub_ = handle_->CreatePublisher<roborts_sdk::cmd_heartbeat>(UNIVERSAL_CMD_SET, CMD_HEARTBEAT,
                                                                         MANIFOLD2_ADDRESS, CHASSIS_ADDRESS);
+  // 单独开一个线程 发布心跳包
   heartbeat_thread_ = std::thread([this]{
                                     roborts_sdk::cmd_heartbeat heartbeat;
                                     heartbeat.heartbeat=0;
@@ -74,10 +81,11 @@ void Chassis::SDK_Init(){
 
 }
 void Chassis::ROS_Init(){
-  //ros publisher
+  //ros publisher 发布 odom 根据轮子的里程计信息和imu信息 这两个信息都是底盘发给PC的
   ros_odom_pub_ = ros_nh_.advertise<nav_msgs::Odometry>("odom", 30);
+  // 裁判系统应该是装在stm32上面 然后底盘发给PC
   ros_uwb_pub_ = ros_nh_.advertise<geometry_msgs::PoseStamped>("uwb", 30);
-  //ros subscriber
+  //ros subscriber 接受上运行的算法给出的速度和加速度信息 再发给底盘
   ros_sub_cmd_chassis_vel_ = ros_nh_.subscribe("cmd_vel", 1, &Chassis::ChassisSpeedCtrlCallback, this);
   ros_sub_cmd_chassis_vel_acc_ = ros_nh_.subscribe("cmd_vel_acc", 1, &Chassis::ChassisSpeedAccCtrlCallback, this);
 
@@ -92,6 +100,7 @@ void Chassis::ROS_Init(){
   uwb_data_.header.frame_id = "uwb";
 }
 void Chassis::ChassisInfoCallback(const std::shared_ptr<roborts_sdk::cmd_chassis_info> chassis_info){
+    ROS_INFO_STREAM_ONCE("ChassisInfoCallback");
 
   ros::Time current_time = ros::Time::now();
   odom_.header.stamp = current_time;
@@ -115,7 +124,7 @@ void Chassis::ChassisInfoCallback(const std::shared_ptr<roborts_sdk::cmd_chassis
 
 }
 void Chassis::UWBInfoCallback(const std::shared_ptr<roborts_sdk::cmd_uwb_info> uwb_info){
-
+ROS_INFO("uwb");
   uwb_data_.header.stamp = ros::Time::now();
   uwb_data_.pose.position.x = ((double)uwb_info->x)/100.0;
   uwb_data_.pose.position.y = ((double)uwb_info->y)/100.0;

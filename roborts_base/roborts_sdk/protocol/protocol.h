@@ -49,6 +49,7 @@ typedef struct Header {
 
 /*************************** Package Infomation **********************/
 /**
+ *
  * @brief Key information that a protocol command should include,
  * @details Used as an interface with dispatch layer.
  */

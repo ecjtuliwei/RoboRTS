@@ -20,7 +20,7 @@
 namespace roborts_sdk {
 Handle::Handle(std::string serial_port) {
   serial_port_ = serial_port;
-  device_ = std::make_shared<SerialDevice>(serial_port_, 921600);
+  device_ = std::make_shared<SerialDevice>(serial_port_, 115200);
   protocol_ = std::make_shared<Protocol>(device_);
 
 }
@@ -45,14 +45,29 @@ std::shared_ptr<Protocol>& Handle::GetProtocol() {
 
 void Handle::Spin() {
 
+    // 处理底盘发给pc的信息
+    int count = 0;
   for (auto sub :subscription_factory_) {
+   // LOG_INFO<<"subscription_factory_ Spin  "<< 111   ;
     executor_->ExecuteSubscription(sub);
+      count++;
   }
+
+  count = 0;
+  // 处理 ?? de xiaoxi
   for (auto client :client_factory_) {
+    //LOG_INFO<<"client_factory_ Spin ";
     executor_->ExecuteClient(client);
+    count++;
   }
+    LOG_INFO<<"client_factory_ Spin count "<< count   ;
+    count = 0;
   for (auto service :service_factory_) {
+    //LOG_INFO<<"subscription_factory_ Spin ";
     executor_->ExecuteService(service);
+    count++;
   }
+
+    LOG_INFO<<"service_factory_ Spin count "<< count   ;
 }
 }

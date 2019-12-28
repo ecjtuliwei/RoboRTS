@@ -1,4 +1,5 @@
 #include "referee_system.h"
+// #include "/home/raozhufa/ROS/DJI_ws/src/roborts_base/roborts_sdk/protocol/protocol.h"
 namespace roborts_base {
 RefereeSystem::RefereeSystem(std::shared_ptr<roborts_sdk::Handle> handle) :
     handle_(handle) {
@@ -116,6 +117,7 @@ void RefereeSystem::GameEventCallback(const std::shared_ptr<roborts_sdk::cmd_eve
   roborts_msgs::BonusStatus bonus_status;
   bonus_status.red_bonus = raw_game_event->event_type>>12&3;
   bonus_status.blue_bonus = raw_game_event->event_type>>14&3;
+  ROS_INFO_STREAM_ONCE("This appears only once.");
   ros_bonus_status_pub_.publish(bonus_status);
 }
 
@@ -156,7 +158,7 @@ void RefereeSystem::RobotStatusCallback(const std::shared_ptr<roborts_sdk::cmd_g
   else{
     robot_status.id = raw_robot_status->robot_id;
   }
-
+  ROS_INFO("PUBLISH");
   robot_status.level = raw_robot_status->robot_level;
   robot_status.remain_hp = raw_robot_status->remain_HP;
   robot_status.max_hp = raw_robot_status->max_HP;
@@ -203,6 +205,7 @@ void RefereeSystem::ProjectileSupplyCallback(const roborts_msgs::ProjectileSuppl
     ROS_ERROR("Can not get robot id before requesting for projectile supply.");
     return;
   }
+
   roborts_sdk::cmd_supply_projectile_booking raw_projectile_booking;
   raw_projectile_booking.supply_projectile_id = 1;
   raw_projectile_booking.supply_robot_id = robot_id_;
